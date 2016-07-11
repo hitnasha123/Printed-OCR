@@ -1,0 +1,78 @@
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.logging.Logger;
+
+import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
+
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
+
+
+public class Nothing{
+
+    public static void main(String[] args) {
+    	//File Chooser
+    	FileSelect j=new FileSelect();
+    	BufferedImage orig=null;
+    	String selectedfile=j.selectFile();
+    	try{
+    		orig=ImageIO.read(new File(selectedfile));
+    	}catch(IOException e){
+    		System.out.println("I/0 Error");return;
+    	}
+    	BufferedImage bin=binarize(orig);
+    	long starttime=System.currentTimeMillis();
+    	CCA Algo=new CCA();
+    	ArrayList<Block> Letters=Algo.segmentLetter(bin);
+    	for(int i=0;i<Letters.size();i++)
+    	crop(bin,Letters.get(i));
+    	long endtime=System.currentTimeMillis();
+    	System.out.println(endtime-starttime);
+       }
+    
+    
+    
+    
+    static BufferedImage binarize(BufferedImage orig){
+    	int h=orig.getHeight();
+    	int w=orig.getWidth();
+		
+    	BufferedImage bin=orig;
+    	
+    	for(int i=0;i<h;i++){
+    		for(int j=0;j<w;j++){
+    			if(bin.getRGB(j,i)>=0xffa00000)
+    				bin.setRGB(j, i, 0xffffffff);
+    			else
+    				bin.setRGB(j, i, 0);
+    			
+    			
+    		}
+    		
+    	}
+    	return bin;
+    }
+    
+    static void crop(BufferedImage original,Block block){
+    	
+    	BufferedImage crop=original.getSubimage(block.xpos, block.ypos, block.width, block.height);
+    	
+    	Date date = new Date();
+    	SimpleDateFormat sdf = new SimpleDateFormat("MM_dd_yyyyhmmssa");
+    	String formattedDate = sdf.format(date);
+    	System.out.println(formattedDate);Random rand=new Random();
+    	
+    	File output=new File("_crop"+formattedDate+rand.nextInt(100000)+".bmp");
+    	try{
+    		ImageIO.write(crop, "bmp", output);
+    	}catch(IOException e){
+    		System.out.print("I/O Error"+output.getName());
+    		
+    	}
+		return;
+    }
+}
+
