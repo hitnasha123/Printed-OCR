@@ -1,6 +1,7 @@
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
@@ -23,13 +24,43 @@ public class PrintedOCR{
     	}catch(IOException e){
     		System.out.println("I/0 Error");return;
     	}
-    	BufferedImage bin=binarize(orig);
-    	long starttime=System.currentTimeMillis();
-    	ArrayList<Block> list=LineSeg(bin);
-    	ArrayList<Block> words=new ArrayList<Block>();
     	
-    	for(int k=0;k<list.size();k++){CCA Algo=new CCA();
-    	ArrayList<Block> Letters=Algo.segmentLetter(bin,list.get(k));
+    	
+    	BufferedImage bin=Binarize.binarize(orig);
+    	long starttime=System.currentTimeMillis();
+    	
+    	ArrayList<Block> list=LineSeg.LineSegmenter(bin);
+    	ArrayList<Block> words=new ArrayList<Block>();
+    	CountDownLatch latch=new CountDownLatch(list.size());
+    	for(int k=0;k<list.size();k++){
+    	Segmenter segmenter=new Segmenter("Thread:"+k, list.get(k), bin);
+    	Thread t=new Thread(segmenter);
+    	t.start();
+    	}
+    	for(int i=0;i<100;++i){
+            new Thread(new Runnable() {
+                public void run() {
+                    //Simulate some work
+                    latch.countDown();
+            }}).start();
+            
+        }
+    	try {
+			latch.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        long endtime=System.currentTimeMillis();
+        System.out.println("Time:"+(endtime-starttime));
+    	/*
+    	for(int k=0;k<list.size();k++){CCA Algo=new CCA("Processing",list.get(k),bin);
+    		Thread t=new Thread(Algo);
+    	t.start();
+    	
+    	ArrayList<Block> Letters=Algo.getLetters();
+    	System.out.println(Letters);
+    	
     	
     	Collections.sort(Letters, new CustomComparator());
     	if(k==0)
@@ -79,11 +110,13 @@ public class PrintedOCR{
     		e.printStackTrace();
     	}
     	for(int i=0;i<Letters.size();i++)
-    	crop(bin,Letters.get(i));
-    	Letters.clear();}
+    		crop(bin,Letters.get(i));
+    	Letters.clear();
+    	}
     	long endtime=System.currentTimeMillis();
     	System.out.println(endtime-starttime);
     	return;
+    	*/
        }
     private static ArrayList<Block> refine(ArrayList<Block> letters) {
 		// TODO Auto-generated method stub
@@ -108,91 +141,7 @@ public class PrintedOCR{
 		}
     }
     
-    public static ArrayList<Block> LineSeg(BufferedImage orig)
-	{
-		BufferedImage img					= orig;
-		boolean flag						= false;
-		int count							= 0;
-		int[] startAndEndRowIndex 			= new int[2];
-		ArrayList<int[]> listOfIndexPairs 	= new ArrayList<int[]>(); 
-		
-		int height	= img.getHeight();
-		int width	= img.getWidth();
-
-		for(int i=0;i<height;i++) //Y
-		{
-			
-			int j=0;
-			for(j=0;j<width;j++) //X
-			{
-				//checking if it is black then make i as true
-				//
-				if(img.getRGB(j,i)==0xff000000)
-				{
-					//add the i value to the hashmap
-					if(!flag)
-					{
-						flag=true;
-						startAndEndRowIndex[0] = i;
-					}
-					
-					break;
-				}
-				if(img.getRGB(j,i)==0xffffffff)
-				{
-					//do nothing increment j
-				}
-					
-			}//end of j loop
-			if(j==width&&flag==true)
-			{
-				
-				startAndEndRowIndex[1] = i-1;System.out.println(startAndEndRowIndex[1] );
-				listOfIndexPairs.add(startAndEndRowIndex);
-				count++;
-				//TODO set flag as false
-				flag=false;
-				startAndEndRowIndex = new int[2];
-			}
-			//NOW CALL CROP FOR THE SET OF BLACK PIXEL ROW Which IS A LINE AND THAT HAS TO BE CROPPED
-		}//end of i loop
-		
-		ArrayList<Block> list=new ArrayList<Block>();
-		for(int i=0;i<listOfIndexPairs.size();i++)
-		{
-			//
-			startAndEndRowIndex = listOfIndexPairs.get(i);
-			int y1=startAndEndRowIndex[0];
-			int y2=startAndEndRowIndex[1]-startAndEndRowIndex[0];
-			
-			list.add(new Block(0, y1, width, y2));;
-			
-			//find all parameters x,y, w,h
-			//parameters are 0,y1,width,y2
-		}
-		return list;
-	}
     
-    
-    static BufferedImage binarize(BufferedImage orig){
-    	int h=orig.getHeight();
-    	int w=orig.getWidth();
-		
-    	BufferedImage bin=orig;
-    	
-    	for(int i=0;i<h;i++){
-    		for(int j=0;j<w;j++){
-    			if(bin.getRGB(j,i)>=0xffa00000)
-    				bin.setRGB(j, i, 0xffffffff);
-    			else
-    				bin.setRGB(j, i, 0);
-    			
-    			
-    		}
-    		
-    	}
-    	return bin;
-    }
     static int count=0;
     static void crop(BufferedImage original,Block block){
     	System.out.println(block);

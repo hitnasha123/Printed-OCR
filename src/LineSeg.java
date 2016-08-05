@@ -2,16 +2,13 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 public class LineSeg 
 {
-	public LineSeg(BufferedImage orig)
+	public static ArrayList<Block> LineSegmenter(BufferedImage orig)
 	{
 		BufferedImage img					= orig;
 		boolean flag						= false;
 		int count							= 0;
 		int[] startAndEndRowIndex 			= new int[2];
 		ArrayList<int[]> listOfIndexPairs 	= new ArrayList<int[]>(); 
-		ArrayList<BufferedImage> Lines		= new ArrayList<BufferedImage>();
-
-		
 		
 		int height	= img.getHeight();
 		int width	= img.getWidth();
@@ -44,10 +41,9 @@ public class LineSeg
 			if(j==width&&flag==true)
 			{
 				
-				startAndEndRowIndex[1] = i-1;//System.out.println(startAndEndRowIndex[1] );
+				startAndEndRowIndex[1] = i-1;System.out.println(startAndEndRowIndex[1] );
 				listOfIndexPairs.add(startAndEndRowIndex);
 				count++;
-				System.out.println(listOfIndexPairs.get(0)[1]);
 				//TODO set flag as false
 				flag=false;
 				startAndEndRowIndex = new int[2];
@@ -55,35 +51,22 @@ public class LineSeg
 			//NOW CALL CROP FOR THE SET OF BLACK PIXEL ROW Which IS A LINE AND THAT HAS TO BE CROPPED
 		}//end of i loop
 		
-		//System.out.println(listOfIndexPairs.get(0)[1]);
-		
+		ArrayList<Block> list=new ArrayList<Block>();
 		for(int i=0;i<listOfIndexPairs.size();i++)
 		{
 			//
 			startAndEndRowIndex = listOfIndexPairs.get(i);
 			int y1=startAndEndRowIndex[0];
 			int y2=startAndEndRowIndex[1]-startAndEndRowIndex[0];
-			Lines.add(crop(img,0,y1,width,y2));
+			
+			list.add(new Block(0, y1, width, y2));;
 			
 			//find all parameters x,y, w,h
 			//parameters are 0,y1,width,y2
 		}
-		
+		return list;
 	}
-			 static BufferedImage crop(BufferedImage img,int x,int y1,int width,int y2)
-			 {
-			    	System.out.println(x+" "+y1+" "+width+" "+y2);
-			    	BufferedImage crop=img.getSubimage(x,y1,width,y2);
-			    	
-			    	return crop;
-					
-			    }
-			
-			//call crop
-			
-			//write to file system
-			
-		
-	
-	//
+    
+    
+    
 }

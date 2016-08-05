@@ -14,28 +14,38 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 
 public class CCA {
-	 ArrayList<ArrayList<Integer>> label;
+	 private Thread t;
+	 private BufferedImage bin;
+	 private String threadName;
+	 private Block block;
+	 private ArrayList<ArrayList<Integer>> label;
+	 private ArrayList<Block> letters;
 	 //Stores all of the labels by pixel
 	 
-	 ArrayList<Set<Integer>> equivalence;
+	 private ArrayList<Set<Integer>> equivalence;
 	 //Stores all of the equivalence classes
-	 
-	 ArrayList<Block> segmentLetter(BufferedImage orig,Block block){
-		 BufferedImage bin=orig;
+	 CCA(String thread,Block block,BufferedImage bin){System.out.print("Hello");
+		 this.threadName=thread;
+		 this.block=block;
+			this.bin=bin;
+	 }
+	 public ArrayList<Block> segmentLetter(){
+		 
 	    	File output=new File("_crop"+".bmp");
 	    	try{
 	    		ImageIO.write(bin, "bmp", output);
-	    	}catch(IOException e){
+	       }catch(IOException e){
 	    		System.out.print("I/O Error");
 	    		
 	    	}
-		ArrayList<Block> letters=new ArrayList<Block>();
+		letters=new ArrayList<Block>();
 		/*This is where the final letter blocks are stored, which contains the following info:
-		 * 1.X-coord
+		 * 1.X-Coord
 		 * 2.Y-Coord
 		 * 3.Height
 		 * 4.Width
-		 * Which are essential for crop function*/
+		 * Which are essential for crop function
+		 */
 		Block temp1=null;
 		Vector<Vector<Point>> group=new Vector<Vector<Point>>();
 		/*Creates The Array of points associated with */
@@ -44,7 +54,7 @@ public class CCA {
 		int check=0;
 		int h=block.height;int w=block.width;
 		int labelcount=0;
-		/*This variable is used to increment the labelcount whenever an isolated pixel is reached*/
+		/*This variable is used to increment the label count whenever an isolated pixel is reached*/
 		Integer[] b=new Integer[w];
 		label=new ArrayList<ArrayList<Integer>>();
 		for(int i=0;i<h;i++){
@@ -61,7 +71,7 @@ public class CCA {
 			
 			for(int j=0;j<w;j++){
 				/*First Pass scans through every vertex*/
-				if(orig.getRGB(block.xpos+j,block.ypos+i )==0xff000000){
+				if(bin.getRGB(block.xpos+j,block.ypos+i )==0xff000000){
 					
 					//If The vertex is black check for neighbours
 				check=checkNeighbours(i,j);
@@ -137,7 +147,7 @@ public class CCA {
 			letters.add(temp1);
 		}
 		
-		
+		System.out.print(letters);
 		return letters;
 	}
 	 public static int convert(int n) {
@@ -192,6 +202,9 @@ public class CCA {
 		if(neighbour==Integer.MAX_VALUE)return 0;
 		return neighbour;
 	}
+
+
+	
 	
 	
 
